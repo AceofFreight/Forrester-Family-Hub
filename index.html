@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Forrester Hub">
+<meta name="theme-color" content="#FFD166">
+<title>Forrester Family Hub</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:#FFFBF0;}
+body{font-family:'Nunito',sans-serif;-webkit-tap-highlight-color:transparent;}
+.app{max-width:480px;margin:0 auto;padding-bottom:74px;min-height:100vh;}
+.hdr{background:#FFD166;padding:14px 18px 12px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.hdr-title{font-size:17px;font-weight:800;color:#2D2D2D;display:flex;align-items:center;gap:6px;}
+.hdr-date{font-size:11px;color:#5A4A00;font-weight:700;margin-top:1px;}
+.hdr-badge{background:#2D2D2D;color:#FFD166;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:800;}
+.sync-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0;}
+.sync-dot.green{background:#22C55E;}.sync-dot.yellow{background:#FBBF24;animation:pulse 1s infinite;}.sync-dot.red{background:#F87171;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.content{padding:13px 13px 0;}
+.card{border-radius:18px;padding:13px 15px;margin-bottom:11px;}
+.c-blue{background:#DBEAFE;border:2px solid #93C5FD;}
+.c-pink{background:#FCE7F3;border:2px solid #F9A8D4;}
+.c-green{background:#D1FAE5;border:2px solid #6EE7B7;}
+.c-orange{background:#FEF3C7;border:2px solid #FCD34D;}
+.c-purple{background:#EDE9FE;border:2px solid #C4B5FD;}
+.c-red{background:#FEE2E2;border:2px solid #FCA5A5;}
+.c-white{background:#fff;border:2px solid #F3F4F6;}
+.ct{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;margin-bottom:9px;}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:12px;}
+.stat{border-radius:14px;padding:10px 6px 8px;text-align:center;}
+.sv{font-size:20px;font-weight:800;}.sl{font-size:9px;font-weight:800;opacity:.8;margin-top:1px;}
+.item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1.5px dashed rgba(0,0,0,.08);}
+.chk{width:22px;height:22px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2.5px solid #D1D5DB;background:transparent;transition:all .15s;font-size:11px;color:#fff;}
+.chk.done{background:#34D399;border-color:#34D399;}
+.lbl{flex:1;font-size:14px;font-weight:700;color:#2D2D2D;}
+.lbl.done{color:#9CA3AF;text-decoration:line-through;}
+.del{border:none;background:none;cursor:pointer;color:#D1D5DB;padding:2px;font-size:17px;line-height:1;}
+.add-row{display:flex;gap:6px;margin-top:9px;}
+.ai{flex:1;border-radius:20px;padding:7px 13px;font-size:13px;font-weight:700;background:white;color:#2D2D2D;outline:none;font-family:'Nunito',sans-serif;}
+.ai-blue{border:2px solid #93C5FD;}.ai-pink{border:2px solid #F9A8D4;}.ai-green{border:2px solid #6EE7B7;}.ai-orange{border:2px solid #FCD34D;}
+.ab{border:none;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:20px;color:#fff;line-height:1;}
+.ab-blue{background:#93C5FD;}.ab-pink{background:#F9A8D4;}.ab-green{background:#6EE7B7;}.ab-orange{background:#FCD34D;}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:2.5px solid #FFD166;display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;z-index:100;padding-bottom:env(safe-area-inset-bottom);}
+.nav::-webkit-scrollbar{display:none;}
+.nt{flex:1;min-width:62px;padding:10px 0 7px;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;border-top:3px solid transparent;margin-top:-2px;font-family:'Nunito',sans-serif;color:#9CA3AF;transition:all .15s;}
+.nt.active{background:#FFFBF0;color:#2D2D2D;border-top-color:#FFD166;}
+.nt-lbl{font-size:9px;font-weight:700;}.nt.active .nt-lbl{font-weight:800;}
+.btn-yellow{background:#FFD166;border:2px solid #2D2D2D;border-radius:20px;padding:6px 15px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;}
+.btn-dark{background:#2D2D2D;color:#FFD166;border:none;border-radius:12px;padding:10px;font-size:14px;font-weight:800;cursor:pointer;width:100%;font-family:'Nunito',sans-serif;}
+.btn-cancel{background:white;border:2px solid #FCD34D;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:800;cursor:pointer;color:#92400E;font-family:'Nunito',sans-serif;}
+.btn-ghost{font-size:11px;font-weight:800;background:none;border:none;cursor:pointer;font-family:'Nunito',sans-serif;padding:0;}
+.btn-link{font-size:12px;font-weight:800;background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:2px;padding:0;margin-top:7px;font-family:'Nunito',sans-serif;}
+.fi{border-radius:10px;padding:8px 12px;font-size:14px;font-weight:700;background:white;outline:none;font-family:'Nunito',sans-serif;border:2px solid #FCD34D;width:100%;margin-bottom:8px;box-sizing:border-box;}
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;}
+.st{font-size:17px;font-weight:800;color:#2D2D2D;}
+.dgl{font-size:10px;font-weight:800;color:#9CA3AF;text-transform:uppercase;letter-spacing:.09em;margin:12px 0 5px;}
+.day-card{border-radius:14px;padding:11px 13px;margin-bottom:8px;border:2px solid #F3F4F6;background:white;}
+.day-card.today-card{border-color:#FFD166;background:#FFFBF0;}
+.meal-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.mi{flex:1;border:1.5px solid #F3F4F6;border-radius:8px;padding:5px 9px;font-size:13px;font-weight:700;font-family:'Nunito',sans-serif;background:transparent;outline:none;color:#2D2D2D;}
+.mi:focus{border-color:#FFD166;background:white;}
+.bsum{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:12px;}
+.bill-row{display:flex;align-items:center;gap:6px;padding:10px 0;border-bottom:1.5px dashed rgba(0,0,0,.08);}
+.cdot{width:23px;height:23px;border-radius:50%;cursor:pointer;border:3.5px solid transparent;transition:all .1s;display:inline-block;}
+.cdot.sel{border-color:#2D2D2D;}
+textarea{width:100%;min-height:300px;border:none;background:transparent;resize:none;font-size:14px;font-weight:700;color:#2D2D2D;font-family:'Nunito',sans-serif;line-height:1.8;outline:none;padding:0;box-sizing:border-box;}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="hdr">
+  <div>
+    <div class="hdr-title">🏠 Forrester Family Hub <span class="sync-dot yellow" id="sync-dot"></span></div>
+    <div class="hdr-date" id="hdr-date"></div>
+  </div>
+  <div class="hdr-badge" id="hdr-badge">0/0 ✓</div>
+</div>
+<div class="content" id="content"></div>
+</div>
+
+<div class="nav">
+  <button class="nt active" onclick="setTab('today')" id="nav-today"><span style="font-size:17px">🏠</span><span class="nt-lbl">Today</span></button>
+  <button class="nt" onclick="setTab('events')" id="nav-events"><span style="font-size:17px">📅</span><span class="nt-lbl">Events</span></button>
+  <button class="nt" onclick="setTab('tasks')" id="nav-tasks"><span style="font-size:17px">✅</span><span class="nt-lbl">Tasks</span></button>
+  <button class="nt" onclick="setTab('grocery')" id="nav-grocery"><span style="font-size:17px">🛒</span><span class="nt-lbl">Grocery</span></button>
+  <button class="nt" onclick="setTab('meals')" id="nav-meals"><span style="font-size:17px">🍽️</span><span class="nt-lbl">Meals</span></button>
+  <button class="nt" onclick="setTab('bills')" id="nav-bills"><span style="font-size:17px">💰</span><span class="nt-lbl">Bills</span></button>
+  <button class="nt" onclick="setTab('notes')" id="nav-notes"><span style="font-size:17px">📝</span><span class="nt-lbl">Notes</span></button>
+</div>
+
+<script>
+// ── Supabase ──────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://uvvymjwzaeqnsveeyjap.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV2dnltand6YWVxbnN2ZWVqeWFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NzgyMzQsImV4cCI6MjA5NDU1NDIzNH0.iszhkobd9wudS7GQsCWbzpJ32GWCDggssErMSWx4BGU';
+
+// The UMD bundle exposes the library as window.supabase with createClient on it
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const KEY_MAP = {
+  'pfh-events':'events','pfh-chancey-tasks':'chanceyTasks',
+  'pfh-brittany-tasks':'brittanyTasks','pfh-grocery':'grocery',
+  'pfh-meal-plan':'mealPlan','pfh-meal-ingr':'mealIngredients',
+  'pfh-bills':'bills','pfh-notes':'notes',
+};
+
+function setSyncDot(s) {
+  const d = document.getElementById('sync-dot');
+  if (d) d.className = 'sync-dot ' + s;
+}
+
+// ── Dual storage: localStorage (instant) + Supabase (cross-device) ──
+function localSave(k, v) {
+  try { localStorage.setItem(k, JSON.stringify(v)); } catch {}
+}
+function localLoad(k) {
+  try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch { return null; }
+}
+async function saveKey(k, v) {
+  localSave(k, v);
+  setSyncDot('yellow');
+  try {
+    const { error } = await db.from('app_data').upsert(
+      { key: k, value: v, updated_at: new Date().toISOString() },
+      { onConflict: 'key' }
+    );
+    if (error) { console.error('Supabase save error:', error); setSyncDot('red'); }
+    else setSyncDot('green');
+  } catch(e) { console.error('Supabase exception:', e); setSyncDot('red'); }
+}
+async function loadAll() {
+  Object.entries(KEY_MAP).forEach(([k, f]) => {
+    const v = localLoad(k);
+    if (v !== null) state[f] = v;
+  });
+  render();
+
+  try {
+    const { data, error } = await db.from('app_data').select('key,value');
+    if (error) { console.error('Supabase load error:', error); setSyncDot('red'); }
+    else if (data && data.length > 0) {
+      data.forEach(row => {
+        const f = KEY_MAP[row.key];
+        if (f !== undefined) {
+          state[f] = row.value;
+          localSave(row.key, row.value);
+        }
+      });
+      render();
+      setSyncDot('green');
+    } else {
+      setSyncDot('green');
+    }
+  } catch(e) { console.error('Supabase exception:', e); setSyncDot('red'); }
+
+  db.channel('app_sync')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'app_data' }, payload => {
+      const f = KEY_MAP[payload.new?.key];
+      if (!f) return;
+      if (f === 'notes' && document.activeElement?.id === 'notes-ta') return;
+      state[f] = payload.new.value;
+      localSave(payload.new.key, payload.new.value);
+      render();
+    })
+    .subscribe(status => { if (status === 'SUBSCRIBED') setSyncDot('green'); });
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+const uid = () => Math.random().toString(36).slice(2, 9);
+const today = new Date().toISOString().slice(0, 10);
+const EVENT_COLORS = ['#60A5FA','#F472B6','#34D399','#FBBF24','#A78BFA','#F87171','#FB923C','#2DD4BF'];
+const BILL_CATS = ['Utilities','Insurance','Subscription','Mortgage/Rent','Car','Medical','Other'];
+const fmtTime = t => { if (!t) return ''; const [h,m] = t.split(':').map(Number); return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`; };
+const fmtMoney = n => '$' + parseFloat(n||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const formatDate = ds => {
+  const d = new Date(ds+'T12:00:00'), t = new Date(); t.setHours(12,0,0,0);
+  const diff = Math.round((d-t)/86400000);
+  if (diff===0) return 'Today'; if (diff===1) return 'Tomorrow';
+  if (diff<7) return d.toLocaleDateString('en-US',{weekday:'long'});
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+};
+function getWeek() {
+  const d = new Date(), sun = new Date(d); sun.setDate(d.getDate()-d.getDay());
+  return Array.from({length:7}, (_,i) => {
+    const dt = new Date(sun); dt.setDate(sun.getDate()+i);
+    const key = dt.toISOString().slice(0,10);
+    return { key, full:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][i], isToday:key===today };
+  });
+}
+const WEEK = getWeek();
+
+// ── State ─────────────────────────────────────────────────────────
+let state = {
+  tab:'today', events:[], chanceyTasks:[], brittanyTasks:[],
+  grocery:[], mealPlan:{}, mealIngredients:[], bills:[], notes:'',
+  showEventForm:false, newEventColor:EVENT_COLORS[0], showBillForm:false,
+};
+
+// ── Tab switching ─────────────────────────────────────────────────
+function setTab(t) {
+  state.tab = t;
+  document.querySelectorAll('.nt').forEach(el => el.classList.remove('active'));
+  document.getElementById('nav-'+t).classList.add('active');
+  render();
+}
+
+// ── Chancey tasks ─────────────────────────────────────────────────
+function toggleCT(id){state.chanceyTasks=state.chanceyTasks.map(t=>t.id===id?{...t,done:!t.done}:t);saveKey('pfh-chancey-tasks',state.chanceyTasks);render();}
+function deleteCT(id){state.chanceyTasks=state.chanceyTasks.filter(t=>t.id!==id);saveKey('pfh-chancey-tasks',state.chanceyTasks);render();}
+function addCT(v){state.chanceyTasks=[...state.chanceyTasks,{id:uid(),text:v,done:false}];saveKey('pfh-chancey-tasks',state.chanceyTasks);render();}
+function clearCT(){state.chanceyTasks=state.chanceyTasks.filter(t=>!t.done);saveKey('pfh-chancey-tasks',state.chanceyTasks);render();}
+
+// ── Brittany tasks ────────────────────────────────────────────────
+function toggleBT(id){state.brittanyTasks=state.brittanyTasks.map(t=>t.id===id?{...t,done:!t.done}:t);saveKey('pfh-brittany-tasks',state.brittanyTasks);render();}
+function deleteBT(id){state.brittanyTasks=state.brittanyTasks.filter(t=>t.id!==id);saveKey('pfh-brittany-tasks',state.brittanyTasks);render();}
+function addBT(v){state.brittanyTasks=[...state.brittanyTasks,{id:uid(),text:v,done:false}];saveKey('pfh-brittany-tasks',state.brittanyTasks);render();}
+function clearBT(){state.brittanyTasks=state.brittanyTasks.filter(t=>!t.done);saveKey('pfh-brittany-tasks',state.brittanyTasks);render();}
+
+// ── Grocery ───────────────────────────────────────────────────────
+function toggleGR(id){state.grocery=state.grocery.map(g=>g.id===id?{...g,done:!g.done}:g);saveKey('pfh-grocery',state.grocery);render();}
+function deleteGR(id){state.grocery=state.grocery.filter(g=>g.id!==id);saveKey('pfh-grocery',state.grocery);render();}
+function addGR(v){state.grocery=[...state.grocery,{id:uid(),text:v,done:false}];saveKey('pfh-grocery',state.grocery);render();}
+function clearGR(){state.grocery=state.grocery.filter(g=>!g.done);saveKey('pfh-grocery',state.grocery);render();}
+
+// ── Meal ingredients ──────────────────────────────────────────────
+function toggleMI(id){state.mealIngredients=state.mealIngredients.map(g=>g.id===id?{...g,done:!g.done}:g);saveKey('pfh-meal-ingr',state.mealIngredients);render();}
+function deleteMI(id){state.mealIngredients=state.mealIngredients.filter(g=>g.id!==id);saveKey('pfh-meal-ingr',state.mealIngredients);render();}
+function addMI(v){state.mealIngredients=[...state.mealIngredients,{id:uid(),text:v,done:false}];saveKey('pfh-meal-ingr',state.mealIngredients);render();}
+function clearMI(){state.mealIngredients=state.mealIngredients.filter(g=>!g.done);saveKey('pfh-meal-ingr',state.mealIngredients);render();}
+
+// ── Events ────────────────────────────────────────────────────────
+function deleteEV(id){state.events=state.events.filter(e=>e.id!==id);saveKey('pfh-events',state.events);render();}
+function toggleEF(){state.showEventForm=!state.showEventForm;render();}
+function setEC(c){state.newEventColor=c;render();setTimeout(()=>document.getElementById('enew-name')?.focus(),10);}
+function submitEvent(){
+  const n=document.getElementById('enew-name')?.value?.trim();
+  const d=document.getElementById('enew-date')?.value;
+  if(!n||!d)return;
+  const t=document.getElementById('enew-time')?.value||'';
+  const loc=document.getElementById('enew-loc')?.value?.trim()||'';
+  state.events=[...state.events,{id:uid(),name:n,date:d,time:t,color:state.newEventColor,location:loc}];
+  saveKey('pfh-events',state.events);state.showEventForm=false;state.newEventColor=EVENT_COLORS[0];render();
+}
+
+// ── Meals ─────────────────────────────────────────────────────────
+function setMeal(date,type,value){
+  if(!state.mealPlan[date])state.mealPlan[date]={breakfast:'',lunch:'',dinner:''};
+  state.mealPlan[date][type]=value;saveKey('pfh-meal-plan',state.mealPlan);
+}
+
+// ── Bills ─────────────────────────────────────────────────────────
+function toggleBillPaid(id){state.bills=state.bills.map(b=>b.id===id?{...b,paid:!b.paid}:b);saveKey('pfh-bills',state.bills);render();}
+function deleteBill(id){state.bills=state.bills.filter(b=>b.id!==id);saveKey('pfh-bills',state.bills);render();}
+function toggleBF(){state.showBillForm=!state.showBillForm;render();}
+function submitBill(){
+  const n=document.getElementById('bnew-name')?.value?.trim();
+  const a=document.getElementById('bnew-amt')?.value;
+  const d=document.getElementById('bnew-date')?.value;
+  const c=document.getElementById('bnew-cat')?.value;
+  if(!n||!a||!d)return;
+  state.bills=[...state.bills,{id:uid(),name:n,amount:a,dueDate:d,paid:false,category:c}];
+  saveKey('pfh-bills',state.bills);state.showBillForm=false;render();
+}
+
+// ── Notes ─────────────────────────────────────────────────────────
+let notesTimer;
+function updateNotes(v){state.notes=v;clearTimeout(notesTimer);notesTimer=setTimeout(()=>saveKey('pfh-notes',v),1000);}
+
+// ── HTML helpers ──────────────────────────────────────────────────
+function addRow(ph,cls,fn){
+  return `<div class="add-row"><input class="ai ai-${cls}" placeholder="${ph}" onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v){${fn}(v);this.value='';}}" /><button class="ab ab-${cls}" onclick="var i=this.previousElementSibling;var v=i.value.trim();if(v){${fn}(v);i.value='';}">+</button></div>`;
+}
+function taskH(t,tog,del){
+  return `<div class="item"><button class="chk${t.done?' done':''}" onclick="${tog}('${t.id}')">${t.done?'✓':''}</button><span class="lbl${t.done?' done':''}">${t.text}</span><button class="del" onclick="${del}('${t.id}')">×</button></div>`;
+}
+function checkH(g,tog,del,bc){
+  return `<div class="item"><button class="chk${g.done?' done':''}" style="border-color:${g.done?'#34D399':bc}" onclick="${tog}('${g.id}')">${g.done?'✓':''}</button><span class="lbl${g.done?' done':''}">${g.text}</span><button class="del" onclick="${del}('${g.id}')">×</button></div>`;
+}
+
+// ── Render: Today ─────────────────────────────────────────────────
+function renderToday(){
+  const todayEv=state.events.filter(e=>e.date===today).sort((a,b)=>a.time.localeCompare(b.time));
+  const cd=state.chanceyTasks.filter(t=>t.done).length,bd=state.brittanyTasks.filter(t=>t.done).length;
+  const gl=state.grocery.filter(g=>!g.done).length;
+  const mp=state.mealPlan[today]||{};
+  const hour=new Date().getHours();
+  const greet=hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
+  const soon7=new Date();soon7.setDate(soon7.getDate()+7);
+  const dueSoon=state.bills.filter(b=>!b.paid&&b.dueDate<=soon7.toISOString().slice(0,10)&&b.dueDate>=today);
+  let h=`<div style="font-size:17px;font-weight:800;color:#2D2D2D;margin-bottom:12px">${greet}! 👋</div>`;
+  h+=`<div class="stats">
+    <div class="stat c-blue"><div class="sv" style="color:#1E40AF">${cd}/${state.chanceyTasks.length}</div><div class="sl" style="color:#1E40AF">Chancey</div></div>
+    <div class="stat c-pink"><div class="sv" style="color:#9D174D">${bd}/${state.brittanyTasks.length}</div><div class="sl" style="color:#9D174D">Brittany</div></div>
+    <div class="stat c-green"><div class="sv" style="color:#065F46">${gl}</div><div class="sl" style="color:#065F46">Grocery left</div></div>
+  </div>`;
+  h+=`<div class="card c-blue"><div class="ct" style="color:#1E40AF">📅 Today's events</div>`;
+  if(!todayEv.length)h+=`<div style="font-size:13px;color:#93C5FD;font-weight:700">No events today — enjoy the free day! 🎉</div>`;
+  else todayEv.forEach(e=>{h+=`<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px"><div style="width:10px;height:10px;border-radius:50%;background:${e.color};flex-shrink:0;margin-top:4px"></div><div style="flex:1"><div style="font-size:14px;font-weight:800;color:#1E40AF">${e.name}</div>${e.location?`<a href="https://maps.apple.com/?q=${encodeURIComponent(e.location)}" style="font-size:11px;font-weight:700;color:#3B82F6;text-decoration:none;display:block;margin-top:1px">📍 ${e.location}</a>`:''}</div><span style="font-size:12px;font-weight:700;color:#60A5FA;flex-shrink:0">${fmtTime(e.time)}</span></div>`;});
+  h+=`<button class="btn-link" style="color:#1E40AF" onclick="setTab('events')">See all events ›</button></div>`;
+  h+=`<div class="card c-orange"><div class="ct" style="color:#92400E">🍽️ Today's meals</div>`;
+  let any=false;
+  [['breakfast','🌅'],['lunch','☀️'],['dinner','🌙']].forEach(([t,ic])=>{const v=mp[t];if(v){any=true;h+=`<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><span>${ic}</span><span style="font-size:13px;font-weight:700;color:#92400E">${v}</span></div>`;}});
+  if(!any)h+=`<div style="font-size:12px;color:#FCD34D;font-weight:700">No meals planned yet.</div>`;
+  h+=`<button class="btn-link" style="color:#92400E" onclick="setTab('meals')">Plan meals ›</button></div>`;
+  if(dueSoon.length){
+    h+=`<div class="card c-red"><div class="ct" style="color:#991B1B">⚠️ Bills due soon</div>`;
+    dueSoon.forEach(b=>{h+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><span style="font-size:13px;font-weight:700;color:#991B1B">${b.name}</span><div><span style="font-size:13px;font-weight:800;color:#991B1B">${fmtMoney(b.amount)}</span><span style="font-size:10px;color:#FCA5A5;font-weight:700;margin-left:6px">Due ${formatDate(b.dueDate)}</span></div></div>`;});
+    h+=`<button class="btn-link" style="color:#991B1B" onclick="setTab('bills')">See all bills ›</button></div>`;
+  }
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">`;
+  [['📋 Chancey','chanceyTasks','c-blue','#1E40AF','#93C5FD'],['📋 Brittany','brittanyTasks','c-pink','#9D174D','#F9A8D4']].forEach(([lbl,key,cls,tc,dc])=>{
+    const pend=state[key].filter(t=>!t.done);
+    h+=`<div class="card ${cls}"><div class="ct" style="color:${tc}">${lbl}</div>`;
+    if(!pend.length)h+=`<div style="font-size:12px;font-weight:700;color:${dc}">All done! 🎉</div>`;
+    else pend.slice(0,3).forEach(t=>{h+=`<div style="font-size:12px;font-weight:700;color:${tc};margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">· ${t.text}</div>`;});
+    h+=`<button class="btn-link" style="color:${tc}" onclick="setTab('tasks')">See all ›</button></div>`;
+  });
+  return h+'</div>';
+}
+
+// ── Render: Events ────────────────────────────────────────────────
+function renderEvents(){
+  const up=state.events.filter(e=>e.date>=today).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  let h=`<div class="sh"><span class="st">📅 Upcoming Events</span><button class="btn-yellow" onclick="toggleEF()">+ Add</button></div>`;
+  if(state.showEventForm){
+    h+=`<div class="card c-orange" style="margin-bottom:13px"><div class="ct" style="color:#92400E">✏️ New event</div>
+    <input id="enew-name" class="fi" placeholder="Event name">
+    <input id="enew-loc" class="fi" placeholder="📍 Location (tap to open in Maps)">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <input id="enew-date" type="date" class="fi" style="margin-bottom:0">
+      <input id="enew-time" type="time" class="fi" style="margin-bottom:0">
+    </div>
+    <div style="font-size:10px;font-weight:800;color:#92400E;letter-spacing:.07em;margin-bottom:7px">COLOR</div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px">`;
+    EVENT_COLORS.forEach(c=>{h+=`<div class="cdot${state.newEventColor===c?' sel':''}" style="background:${c}" onclick="setEC('${c}')"></div>`;});
+    h+=`</div><div style="display:flex;gap:8px"><button class="btn-dark" onclick="submitEvent()">Add Event</button><button class="btn-cancel" onclick="toggleEF()">Cancel</button></div></div>`;
+  }
+  if(!up.length){h+=`<div style="text-align:center;padding:40px 0;color:#9CA3AF;font-weight:700">No upcoming events.<br>Tap <b>Add</b> to get started! 📅</div>`;return h;}
+  const grps={};
+  up.forEach(e=>{const k=formatDate(e.date);if(!grps[k])grps[k]=[];grps[k].push(e);});
+  Object.entries(grps).forEach(([lbl,evts])=>{
+    h+=`<div class="dgl">${lbl}</div>`;
+    evts.forEach(e=>{
+      h+=`<div class="card c-white" style="margin-bottom:8px"><div style="display:flex;align-items:flex-start;gap:9px">
+        <div style="width:12px;height:12px;border-radius:50%;background:${e.color};flex-shrink:0;margin-top:3px"></div>
+        <div style="flex:1"><div style="font-size:15px;font-weight:800;color:#2D2D2D">${e.name}</div>
+        ${e.time?`<div style="font-size:12px;color:#9CA3AF;font-weight:700;margin-top:2px">${fmtTime(e.time)}</div>`:''}
+        ${e.location?`<a href="https://maps.apple.com/?q=${encodeURIComponent(e.location)}" style="font-size:12px;font-weight:700;color:#3B82F6;text-decoration:none;margin-top:3px;display:block">📍 ${e.location} <span style="opacity:.6;font-size:10px">↗</span></a>`:''}
+        </div>
+        <button onclick="deleteEV('${e.id}')" style="border:none;background:none;cursor:pointer;color:#FCA5A5;font-size:16px;padding:4px">🗑</button>
+      </div></div>`;
+    });
+  });
+  return h;
+}
+
+// ── Render: Tasks ─────────────────────────────────────────────────
+function renderTasks(){
+  let h=`<div class="st" style="margin-bottom:13px">✅ Task Lists</div>`;
+  [{lbl:"📋 Chancey's Tasks",key:'chanceyTasks',cls:'c-blue',tc:'#1E40AF',tog:'toggleCT',del:'deleteCT',add:'addCT',clr:'clearCT',ai:'blue'},
+   {lbl:"📋 Brittany's Tasks",key:'brittanyTasks',cls:'c-pink',tc:'#9D174D',tog:'toggleBT',del:'deleteBT',add:'addBT',clr:'clearBT',ai:'pink'}
+  ].forEach(c=>{
+    const done=state[c.key].filter(t=>t.done).length;
+    h+=`<div class="card ${c.cls}"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><div class="ct" style="color:${c.tc};margin-bottom:0">${c.lbl}</div>${state[c.key].some(t=>t.done)?`<button class="btn-ghost" style="color:${c.tc}" onclick="${c.clr}()">Clear done</button>`:''}</div>
+    <div style="font-size:12px;font-weight:800;color:${c.tc};opacity:.8;margin-bottom:9px">${done}/${state[c.key].length} complete</div>`;
+    if(!state[c.key].length)h+=`<div style="font-size:12px;font-weight:700;color:#D1D5DB">No tasks yet! 🎉</div>`;
+    state[c.key].forEach(t=>{h+=taskH(t,c.tog,c.del);});
+    h+=addRow('Add a task...',c.ai,c.add)+'</div>';
+  });
+  return h;
+}
+
+// ── Render: Grocery ───────────────────────────────────────────────
+function renderGrocery(){
+  const rem=state.grocery.filter(g=>!g.done).length;
+  let h=`<div class="sh"><span class="st">🛒 Grocery List</span>${state.grocery.some(g=>g.done)?`<button class="btn-yellow" onclick="clearGR()">Clear checked</button>`:''}</div>`;
+  h+=`<div class="card c-green"><div style="font-size:13px;color:#065F46;font-weight:800;margin-bottom:10px">${rem===0?'🎉 All picked up!':`${rem} item${rem!==1?'s':''} left`}</div>`;
+  if(!state.grocery.length)h+=`<div style="font-size:13px;color:#6EE7B7;font-weight:700">Your list is empty!</div>`;
+  state.grocery.forEach(g=>{h+=checkH(g,'toggleGR','deleteGR','#6EE7B7');});
+  return h+addRow('Add item...','green','addGR')+'</div>';
+}
+
+// ── Render: Meals ─────────────────────────────────────────────────
+function renderMeals(){
+  const miLeft=state.mealIngredients.filter(m=>!m.done).length;
+  let h=`<div class="st" style="margin-bottom:12px">🍽️ Meal Planner</div>`;
+  WEEK.forEach(day=>{
+    const mp=state.mealPlan[day.key]||{};
+    h+=`<div class="${day.isToday?'day-card today-card':'day-card'}">
+      <div style="font-size:12px;font-weight:800;color:${day.isToday?'#92400E':'#2D2D2D'};margin-bottom:7px">${day.isToday?'⭐ ':''}<b>${day.full}</b>${day.isToday?' — Today':''}</div>`;
+    [['breakfast','🌅','Breakfast'],['lunch','☀️','Lunch'],['dinner','🌙','Dinner']].forEach(([t,ic,lbl])=>{
+      h+=`<div class="meal-row"><span style="font-size:13px;width:22px;flex-shrink:0">${ic}</span><input class="mi" value="${(mp[t]||'').replace(/"/g,'&quot;')}" placeholder="${lbl}..." onchange="setMeal('${day.key}','${t}',this.value)" onblur="setMeal('${day.key}','${t}',this.value)"></div>`;
+    });
+    h+=`</div>`;
+  });
+  h+=`<div class="sh" style="margin-top:4px"><span style="font-size:15px;font-weight:800;color:#2D2D2D">🧺 Ingredients Needed</span>${state.mealIngredients.some(m=>m.done)?`<button class="btn-ghost" style="color:#92400E" onclick="clearMI()">Clear done</button>`:''}</div>`;
+  h+=`<div class="card c-orange"><div style="font-size:12px;font-weight:800;color:#92400E;opacity:.8;margin-bottom:9px">${miLeft} item${miLeft!==1?'s':''} needed</div>`;
+  if(!state.mealIngredients.length)h+=`<div style="font-size:13px;color:#FCD34D;font-weight:700">No ingredients listed yet!</div>`;
+  state.mealIngredients.forEach(g=>{h+=checkH(g,'toggleMI','deleteMI','#FCD34D');});
+  return h+addRow('Add ingredient...','orange','addMI')+'</div>';
+}
+
+// ── Render: Bills ─────────────────────────────────────────────────
+function renderBills(){
+  const total=state.bills.reduce((s,b)=>s+parseFloat(b.amount||0),0);
+  const paid=state.bills.filter(b=>b.paid).reduce((s,b)=>s+parseFloat(b.amount||0),0);
+  let h=`<div class="sh"><span class="st">💰 Bill Tracker</span><button class="btn-yellow" onclick="toggleBF()">+ Add</button></div>`;
+  h+=`<div class="bsum">
+    <div class="stat c-blue" style="border-radius:14px;padding:10px 6px 8px;text-align:center"><div class="sv" style="font-size:15px;color:#1E40AF">${fmtMoney(total)}</div><div class="sl" style="color:#1E40AF">Total</div></div>
+    <div class="stat c-green" style="border-radius:14px;padding:10px 6px 8px;text-align:center"><div class="sv" style="font-size:15px;color:#065F46">${fmtMoney(paid)}</div><div class="sl" style="color:#065F46">Paid</div></div>
+    <div class="stat c-red" style="border-radius:14px;padding:10px 6px 8px;text-align:center"><div class="sv" style="font-size:15px;color:#991B1B">${fmtMoney(total-paid)}</div><div class="sl" style="color:#991B1B">Remaining</div></div>
+  </div>`;
+  if(state.showBillForm){
+    h+=`<div class="card c-orange" style="margin-bottom:12px"><div class="ct" style="color:#92400E">✏️ New bill</div>
+    <input id="bnew-name" class="fi" placeholder="Bill name (e.g. Electric)">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <input id="bnew-amt" type="number" step="0.01" class="fi" style="margin-bottom:0" placeholder="Amount ($)">
+      <input id="bnew-date" type="date" class="fi" style="margin-bottom:0">
+    </div>
+    <select id="bnew-cat" class="fi">${BILL_CATS.map(c=>`<option>${c}</option>`).join('')}</select>
+    <div style="display:flex;gap:8px;margin-top:2px"><button class="btn-dark" onclick="submitBill()">Add Bill</button><button class="btn-cancel" onclick="toggleBF()">Cancel</button></div>
+    </div>`;
+  }
+  const soon7=new Date();soon7.setDate(soon7.getDate()+7);
+  const sorted=[...state.bills].sort((a,b)=>a.paid!==b.paid?(a.paid?1:-1):a.dueDate.localeCompare(b.dueDate));
+  h+=`<div class="card c-white">`;
+  if(!sorted.length)h+=`<div style="font-size:13px;color:#D1D5DB;font-weight:700;text-align:center;padding:12px 0">No bills yet! Tap + Add above.</div>`;
+  sorted.forEach(b=>{
+    const overdue=!b.paid&&b.dueDate<today;
+    const duesoon=!b.paid&&b.dueDate>=today&&b.dueDate<=soon7.toISOString().slice(0,10);
+    h+=`<div class="bill-row">
+      <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:800;color:${b.paid?'#9CA3AF':'#2D2D2D'};${b.paid?'text-decoration:line-through':''}">${b.name}</div>
+      <div style="font-size:11px;color:#9CA3AF;font-weight:700;margin-top:1px">${b.category} · Due ${formatDate(b.dueDate)}${overdue?' ⚠️':duesoon?' 🔔':''}</div></div>
+      <div style="font-size:15px;font-weight:800;color:${b.paid?'#9CA3AF':overdue?'#EF4444':'#2D2D2D'};margin-right:6px;flex-shrink:0">${fmtMoney(b.amount)}</div>
+      <button onclick="toggleBillPaid('${b.id}')" style="${b.paid?'background:#D1FAE5;color:#065F46;border:1.5px solid #6EE7B7':'background:#FEE2E2;color:#991B1B;border:1.5px solid #FCA5A5'};border-radius:20px;padding:4px 10px;font-size:11px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;flex-shrink:0">${b.paid?'✓ Paid':'Mark paid'}</button>
+      <button onclick="deleteBill('${b.id}')" style="border:none;background:none;cursor:pointer;color:#D1D5DB;font-size:17px;flex-shrink:0">×</button>
+    </div>`;
+  });
+  return h+'</div>';
+}
+
+// ── Render: Notes ─────────────────────────────────────────────────
+function renderNotes(){
+  return `<div class="st" style="margin-bottom:13px">📝 Shared Notes</div>
+  <div class="card c-purple"><div class="ct" style="color:#5B21B6">✏️ Family notes</div>
+  <textarea id="notes-ta" oninput="updateNotes(this.value)" placeholder="Jot down anything — reminders, ideas, passwords, info to share...">${state.notes}</textarea>
+  <div style="font-size:11px;color:#C4B5FD;font-weight:700;margin-top:4px">✓ Syncs to all devices automatically</div></div>`;
+}
+
+// ── Main render ───────────────────────────────────────────────────
+function render(){
+  const cd=state.chanceyTasks.filter(t=>t.done).length+state.brittanyTasks.filter(t=>t.done).length;
+  const ct=state.chanceyTasks.length+state.brittanyTasks.length;
+  document.getElementById('hdr-badge').textContent=`${cd}/${ct} ✓`;
+  document.getElementById('hdr-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  const fns={today:renderToday,events:renderEvents,tasks:renderTasks,grocery:renderGrocery,meals:renderMeals,bills:renderBills,notes:renderNotes};
+  document.getElementById('content').innerHTML=(fns[state.tab]||renderToday)();
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+loadAll();
+if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</body>
+</html>
